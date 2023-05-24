@@ -88,21 +88,91 @@ Install Docker from their [official guide](https://docs.docker.com/engine/instal
 
 ### Accepting Payments
 
-1. [ZEBEDEE](https://zebedee.io)
-  - [Sign up for a ZEBEDEE Developer Dashboard account](https://dashboard.zebedee.io/signup), create a new LIVE Project, and get that Project's API Key
-  - Set `ZEBEDEE_API_KEY` environment variable with the API Key above
-  - On `.nostr/settings.yaml` file make the following changes:
-    - `payments.enabled` to `true`
-    - `payments.processor` to `zebedee`
-    - `paymentsProcessors.zebedee.callbackBaseURL` to match your Nostream URL (e.g. `https://{YOUR_DOMAIN_HERE}/callbacks/zebedee`)
-  - Read the in-depth guide for more information: [Set Up a Paid Nostr Relay with ZEBEDEE API](https://docs.zebedee.io/docs/guides/nostr-relay)
+1. Before you begin
+   - Complete one of the Quick Start guides in this document
+   - Create a `.env` file
+   - On `.nostr/settings.yaml` file make the following changes:
+     - Set `payments.enabled` to `true`
+     - Set `payments.feeSchedules.admission.enabled` to `true`
+     - Set `limits.event.pubkey.minBalance` to the minimum balance in msats required to accept events (i.e. `1000000` to require a balance of `1000` sats)
+   - Choose one of the following payment processors: `zebedee`, `nodeless`, `opennode`, `lnbits`, `lnurl`
 
-2. Nodeless.io
-  - Sign up for a new account at https://nodeless.io and create a new store. Take note of the store ID.
-  - Create a store webhook and make sure to check all of the events. Grab the store webhook secret.
-  - Go to Profile > API Tokens and generate a new key and keep note of it.
-  - Set NODELESS_API_KEY and NODELESS_WEBHOOK_SECRET environment variables with generated key and webhook secret, respectively.
-  - On your .nostr/settings.yaml file, update the field `paymentsProcessors.nodeless.storeId1 with your store ID.
+2. [ZEBEDEE](https://zebedee.io)
+   - Complete the step "Before you begin"
+   - [Sign up for a ZEBEDEE Developer Dashboard account](https://dashboard.zebedee.io/signup), create a new LIVE Project, and get that Project's API Key
+   - Set `ZEBEDEE_API_KEY` environment variable with the API Key above on your `.env` file
+
+    ```
+    ZEBEDEE_API_KEY={YOUR_ZEBEDEE_API_KEY_HERE}
+    ```
+
+   - Follow the required steps for all payments processors
+   - On `.nostr/settings.yaml` file make the following changes:
+     - `payments.processor` to `zebedee`
+     - `paymentsProcessors.zebedee.callbackBaseURL` to match your Nostream URL (e.g. `https://{YOUR_DOMAIN_HERE}/callbacks/zebedee`)
+   - Restart Nostream (`./scripts/stop` followed by `./scripts/start`)
+   - Read the in-depth guide for more information: [Set Up a Paid Nostr Relay with ZEBEDEE API](https://docs.zebedee.io/docs/guides/nostr-relay)
+
+3. [Nodeless](https://nodeless.io/?ref=587f477f-ba1c-4bd3-8986-8302c98f6731)
+   - Complete the step "Before you begin"
+   - [Sign up](https://nodeless.io/?ref=587f477f-ba1c-4bd3-8986-8302c98f6731) for a new account, create a new store and take note of the store ID
+   - Go to Profile > API Tokens and generate a new key and take note of it
+   - Create a store webhook with your Nodeless callback URL (e.g. `https://{YOUR_DOMAIN_HERE}/callbacks/nodeless`) and make sure to enable all of the events. Grab the generated store webhook secret
+   - Set `NODELESS_API_KEY` and `NODELESS_WEBHOOK_SECRET` environment variables with generated API key and webhook secret, respectively
+
+    ```
+    NODELESS_API_KEY={YOUR_NODELESS_API_KEY}
+    NODELESS_WEBHOOK_SECRET={YOUR_NODELESS_WEBHOOK_SECRET}
+    ```
+
+   - On your `.nostr/settings.yaml` file make the following changes:
+     - Set `payments.processor` to `nodeless`
+     - Set `paymentsProcessors.nodeless.storeId` to your store ID
+   - Restart Nostream (`./scripts/stop` followed by `./scripts/start`)
+
+4. [OpenNode](https://www.opennode.com/)
+   - Complete the step "Before you begin"
+   - Sign up for a new account and get verified
+   - Go to Developers > Integrations and setup two-factor authentication
+   - Create a new API Key with Invoices permission
+   - Set `OPENNODE_API_KEY` environment variable on your `.env` file
+
+     ```
+     OPENNODE_API_KEY={YOUR_OPENNODE_API_KEY}
+     ```
+
+   - On your `.nostr/settings.yaml` file make the following changes:
+     - Set `payments.processor` to `opennode`
+   - Restart Nostream (`./scripts/stop` followed by `./scripts/start`)
+
+5. [LNBITS](https://lnbits.com/)
+    - Complete the step "Before you begin"
+    - Create a new wallet on you public LNbits instance
+      - [Demo](https://legend.lnbits.com/) server must not be used for production
+      - Your instance must be accessible from the internet and have a valid SSL/TLS certificate
+    - Get wallet Invoice/read key (in Api docs section of your wallet)
+    - set `LNBITS_API_KEY` environment variable with the Invoice/read key Key above on your `.env` file
+
+      ```
+      LNBITS_API_KEY={YOUR_LNBITS_API_KEY_HERE}
+      ```
+    - On your `.nostr/settings.yaml` file make the following changes:
+      - Set `payments.processor` to `lnbits`
+      - set `lnbits.baseURL` to your LNbits instance URL (e.g. `https://{YOUR_LNBITS_DOMAIN_HERE}/`)
+      - Set `paymentsProcessors.lnbits.callbackBaseURL` to match your Nostream URL (e.g. `https://{YOUR_DOMAIN_HERE}/callbacks/lnbits`)
+    - Restart Nostream (`./scripts/stop` followed by `./scripts/start`)
+
+5. Ensure payments are required for your public key
+   - Visit https://{YOUR-DOMAIN}/
+   - You should be presented with a form requesting an admission fee to be paid
+   - Fill out the form and take the necessary steps to pay the invoice
+   - Wait until the screen indicates that payment was received
+   - Add your relay URL to your favorite Nostr client (wss://{YOUR-DOMAIN}) and wait for it to connect
+   - Send a couple notes to test
+   - Go to https://websocketking.com/ and connect to your relay (wss://{YOUR_DOMAIN})
+   - Convert your npub to hexadecimal using a [Key Converter](https://damus.io/key/)
+   - Send the following JSON message: `["REQ", "payment-test", {"authors":["your-pubkey-in-hexadecimal"]}]`
+   - You should get back the few notes you sent earlier
 
 ## Quick Start (Docker Compose)
 
